@@ -20,7 +20,7 @@ function grabData() {
             return response.json();
         })
         .then(function(data){
-            if (localStorage.getItem('profile0') != null && localStorage.getItem('profile9')){
+            if (localStorage.getItem('profile0') != null && localStorage.getItem('profile9') != null){
                 localStorage.setItem('profile0', localStorage.getItem('profile9'));
             }
             for(let i = 0; i < data.results.length; i++){
@@ -76,35 +76,16 @@ function runProfiles() {
             let dislikeProfileEl = document.querySelector('.choices__dislike'); 
             
             likeProfileEl.addEventListener('click', function(){
-                if (likes != null) {
-                    likes.push(profile);
-                    localStorage.setItem('likes', JSON.stringify(likes));
-                    teller++;
-                    runProfiles();
-                }
-                else {
-                    likes = [];
-                    likes.push(profile);
-                    localStorage.setItem('likes', JSON.stringify(likes));
-                    teller++;
-                    runProfiles();
-                }
+                addToList(profile, 'likes');
+                teller++;
+                runProfiles();
+                
             })
 
             dislikeProfileEl.addEventListener('click', function(){
-                if (dislikes != null) {
-                    dislikes.push(profile);
-                    localStorage.setItem('dislikes', JSON.stringify(dislikes));
-                    teller++;
-                    runProfiles();
-                }
-                else {
-                    dislikes = [];
-                    dislikes.push(profile);
-                    localStorage.setItem('dislikes', JSON.stringify(dislikes));
-                    teller++;
-                    runProfiles();
-                }
+                addToList(profile, 'dislikes');
+                teller++;
+                runProfiles(); 
             })
         }
         else {
@@ -115,6 +96,19 @@ function runProfiles() {
     else {
         teller = 0;
         grabData();
+    }
+}
+
+function addToList(profile, type) {
+    let listLikeDislike = JSON.parse(localStorage.getItem(type));
+    if (listLikeDislike != null) {
+        listLikeDislike.push(profile);
+        localStorage.setItem(type, JSON.stringify(listLikeDislike));
+    }
+    else {
+        listLikeDislike = [];
+        listLikeDislike.push(profile);
+        localStorage.setItem(type, JSON.stringify(listLikeDislike));
     }
 }
 
@@ -153,9 +147,13 @@ function makeFirstCapital(word) {
     return capitalWord;
 }
 
-function listLikesDislikes(list){
+function listLikesDislikes(type){
     let tempStr = '';
-    let listProfiles = JSON.parse(localStorage.getItem(list));
+    let button = '';
+    let listProfiles = JSON.parse(localStorage.getItem(type));
+    
+    button = type == 'dislikes' ? '<i class="fas fa-times"></i>' : '<i class="fas fa-heart"></i>';
+
     if (listProfiles != null) {
         for(let i = 0; i < listProfiles.length; i++){
             tempStr += `
@@ -166,8 +164,20 @@ function listLikesDislikes(list){
                     <div class="profile__name">
                         <h1>${makeFirstCapital(listProfiles[i].name)}</h1>
                     </div>
+                    <div class="button">
+                        <button id="button-${i}" class="button__dislike button-${i}">${button}</button>
+                    </div>
                 </div>
             `
+        }
+
+        profileEl.innerHTML = tempStr;
+
+        for(let i = 0; i < listProfiles.length; i++){
+            document.getElementById('button-' + i).addEventListener('click', function(){
+                changeChoice(type, i);
+                listLikesDislikes(type);
+            });
         }
     }
     else {
@@ -176,9 +186,28 @@ function listLikesDislikes(list){
                 Geen profielen om weer te geven
             </div>
         `
+        profileEl.innerHTML = tempStr;
     }
+}
 
-    profileEl.innerHTML = tempStr;
+function changeChoice(type, profileNumber) {
+    let listDislikes = JSON.parse(localStorage.getItem('dislikes'));
+    let listLikes = JSON.parse(localStorage.getItem('likes'));
+
+    if (type == "likes"){
+        let profile = listLikes[profileNumber];
+        listDislikes.push(profile);
+        localStorage.setItem('dislikes', JSON.stringify(listDislikes));
+        listLikes.splice(profileNumber, 1);
+        localStorage.setItem('likes', JSON.stringify(listLikes))
+    }
+    else {
+        let profile = listDislikes[profileNumber];
+        listLikes.push(profile);
+        localStorage.setItem('likes', JSON.stringify(listLikes));
+        listDislikes.splice(profileNumber, 1);
+        localStorage.setItem('dislikes', JSON.stringify(listDislikes))
+    }
 }
 
 profilesEl.addEventListener('click', function(e){
