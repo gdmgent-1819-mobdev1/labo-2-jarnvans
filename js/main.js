@@ -1,3 +1,4 @@
+//object
 let Profile = function(id, name, age, city, picture) {
     this.id = id;
     this.name = name;
@@ -6,14 +7,14 @@ let Profile = function(id, name, age, city, picture) {
     this.picture = picture;
 }
 
-
+// variables
 let teller = 0;
-let profileEl = document.querySelector('.tinder');
+let profileEl = document.querySelector('.tinder-profile');
 let dislikesEl = document.querySelector('.dislikes');
 let likesEl = document.querySelector('.likes');
 let profilesEl = document.querySelector('.profiles');
 
-//Grabbing data and putting profiles in local storage
+//grabbing data and putting profiles in local storage
 function grabData() {
     fetch('https://randomuser.me/api/?results=10')
         .then(function(response){
@@ -26,7 +27,6 @@ function grabData() {
             for(let i = 0; i < data.results.length; i++){
                 let profile = new Profile(data.results[i].login.uuid, data.results[i].name.first, data.results[i].dob.age, data.results[i].location.city, data.results[i].picture.large);
 
-                // console.log(profile);
                 if(localStorage.getItem('profile' + i) != null) {
                     if (i == 0) {
                         i = 1;
@@ -39,9 +39,12 @@ function grabData() {
             }
             runProfiles();
         })
+        .catch(function(error){
+            console.log(error);
+        })
 }
 
-//Show profile on screen and like or dislike
+//showing a profile on screen and like or dislike the profile
 function runProfiles() {
     let likes = JSON.parse(localStorage.getItem('likes'));
     let dislikes = JSON.parse(localStorage.getItem('dislikes'));
@@ -60,10 +63,12 @@ function runProfiles() {
                     <img src="${profile.picture}">
                 </div>
                 <div class="profile__info">
-                    <h1 class="name">${makeFirstCapital(profile.name)}</h1>
-                    <p class="age">${profile.age}</p>
-                    <p class="city">${makeFirstCapital(profile.city)}</p>
-                <div>
+                    <h1 class="name">${profile.name}</h1>
+                    <h2 class="age"> - ${profile.age}</h2>
+                </div>
+                <div class="profile__city">
+                    <p class="city">${profile.city}</p>
+                </div>
                 <hr>
                 <div class="choices">
                     <button class="choices__dislike"><i class="fas fa-times"></i></button>
@@ -99,8 +104,10 @@ function runProfiles() {
     }
 }
 
+//adding profile to the dislike or like list
 function addToList(profile, type) {
     let listLikeDislike = JSON.parse(localStorage.getItem(type));
+    console.log(listLikeDislike);
     if (listLikeDislike != null) {
         listLikeDislike.push(profile);
         localStorage.setItem(type, JSON.stringify(listLikeDislike));
@@ -112,6 +119,7 @@ function addToList(profile, type) {
     }
 }
 
+//check if a profile is already liked or not
 function checkExists(likes, dislikes, profile) {
     let exists = false;
     
@@ -119,7 +127,7 @@ function checkExists(likes, dislikes, profile) {
         for(let i = 0; i < likes.length; i++){
             if(profile.id == likes[i].id){
                 exists = true;
-                console.log('je hebt dit profiel al geliked')
+                console.log('je hebt dit profiel al geliked');
             }
         }
     }
@@ -127,69 +135,70 @@ function checkExists(likes, dislikes, profile) {
         for(let i = 0; i < dislikes.length; i++){
             if(profile.id == dislikes[i].id){
                 exists = true;
-                console.log('je hebt dit profiel al gedisliked')
+                console.log('je hebt dit profiel al gedisliked');
             }
         }
     }
-    console.log(exists)
     return exists;
 }
 
-function makeFirstCapital(word) {
-    let words = [];
-    let capitalWord = '';
-    words = word.split(" ");
-
-    for(let i = 0; i < words.length; i++) {
-        words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
-    }
-    capitalWord = words.join(' ');
-    return capitalWord;
-}
-
+//making a list of the person you liked or disliked
 function listLikesDislikes(type){
     let tempStr = '';
-    let button = '';
+    let icon = '';
+    let classButton = '';
     let listProfiles = JSON.parse(localStorage.getItem(type));
-    
-    button = type == 'dislikes' ? '<i class="fas fa-times"></i>' : '<i class="fas fa-heart"></i>';
-
+    classButton = type == 'dislikes' ? 'list-like' : 'list-dislike';
+    icon = type == 'dislikes' ? '<i class="fas fa-heart"></i>' : '<i class="fas fa-times"></i>';
     if (listProfiles != null) {
-        for(let i = 0; i < listProfiles.length; i++){
-            tempStr += `
-                <div class="profile">
-                    <div class="profiles-list__picture">
-                        <img src="${listProfiles[i].picture}">
+        if (listProfiles.length > 0) {
+            for(let i = 0; i < listProfiles.length; i++){
+                tempStr += `
+                    <div class="profile-list">
+                        <div class="profile-list__picture">
+                            <img src="${listProfiles[i].picture}">
+                        </div>
+                        <div class="profile-list__name">
+                            <h1>${listProfiles[i].name}</h1>
+                        </div>
+                        <div class="button">
+                            <button id="button-${i}" class="button-list ${classButton}">${icon}</button>
+                        </div>
                     </div>
-                    <div class="profile__name">
-                        <h1>${makeFirstCapital(listProfiles[i].name)}</h1>
-                    </div>
-                    <div class="button">
-                        <button id="button-${i}" class="button__dislike button-${i}">${button}</button>
-                    </div>
+                `  
+            }
+
+            profileEl.innerHTML = tempStr;
+
+            for(let i = 0; i < listProfiles.length; i++){
+                document.getElementById('button-' + i).addEventListener('click', function(){
+                    changeChoice(type, i);
+                    listLikesDislikes(type);
+                });
+            }
+        }
+        else {
+            tempStr = `
+                <div class="message">
+                    <p>Nog geen profielen om weer te geven.</p>
                 </div>
             `
-        }
-
-        profileEl.innerHTML = tempStr;
-
-        for(let i = 0; i < listProfiles.length; i++){
-            document.getElementById('button-' + i).addEventListener('click', function(){
-                changeChoice(type, i);
-                listLikesDislikes(type);
-            });
+            profileEl.innerHTML = tempStr;
         }
     }
     else {
         tempStr = `
             <div class="message">
-                Geen profielen om weer te geven
+                <p>
+                    Nog geen profielen om weer te geven.
+                </p>
             </div>
         `
         profileEl.innerHTML = tempStr;
     }
 }
 
+//changes a like to a dislike or a dislike to a like
 function changeChoice(type, profileNumber) {
     let listDislikes = JSON.parse(localStorage.getItem('dislikes'));
     let listLikes = JSON.parse(localStorage.getItem('likes'));
@@ -210,18 +219,28 @@ function changeChoice(type, profileNumber) {
     }
 }
 
+//event listeners
 profilesEl.addEventListener('click', function(e){
+    profilesEl.classList.add('active')
+    dislikesEl.classList.remove('active');
+    likesEl.classList.remove('active')
     e.preventDefault();
     runProfiles();
 })
 
 dislikesEl.addEventListener('click', function(e){
     e.preventDefault();
+    profilesEl.classList.remove('active')
+    dislikesEl.classList.add('active');
+    likesEl.classList.remove('active');
     listLikesDislikes('dislikes');
 })
 
 likesEl.addEventListener('click', function(e){
     e.preventDefault();
+    profilesEl.classList.remove('active')
+    dislikesEl.classList.remove('active');
+    likesEl.classList.add('active');
     listLikesDislikes('likes');
 })
 
